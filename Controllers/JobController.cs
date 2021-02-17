@@ -1,7 +1,8 @@
 
 using System.Collections.Generic;
-using gregs.db;
+using System;
 using gregs.Models;
+using gregs.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace gregs.Controllers
@@ -13,12 +14,18 @@ namespace gregs.Controllers
 
     public class JobController : ControllerBase
     {
-        [HttpGet]
+    private readonly JobService _js;
+    public JobController(JobService js)
+    {
+      _js = js;
+    }
+
+    [HttpGet]
         public ActionResult<IEnumerable<Job>> Get()
         {
             try
             {
-        return Ok(FakeDb.Jobs);
+        return Ok(_js.Get());
       }
             catch (System.Exception err)
             {
@@ -26,13 +33,27 @@ namespace gregs.Controllers
                 return BadRequest(err.Message);
             }
         }
+        [HttpGet("{id}")]
+    public ActionResult<Job> Get(string id)
+    {
+      try
+      {
+        Job job = _js.GetById(id);
+        return Ok(job);
+      }
+      catch (Exception e)
+      {
+        return BadRequest(e.Message);
+      }
+
+    }
         [HttpPost]
         public ActionResult<Job> Create([FromBody] Job newJob)
         {
             try
             {
-        FakeDb.Jobs.Add(newJob);
-        return Ok(newJob);
+        Job job = _js.Create(newJob);
+        return Ok(job);
       }
             catch (System.Exception err)
             {
@@ -45,10 +66,9 @@ namespace gregs.Controllers
     {
       try
       {
-        Job jobToRemove = FakeDb.Jobs.Find(j => j.Id == jobId);
-        if (FakeDb.Jobs.Remove(jobToRemove))
+        _js.Delete(jobId);
         {
-          return Ok("Job Purchased");
+          return Ok("Job Deleted");
         };
         throw new System.Exception("Job does not exist");
       }
@@ -62,11 +82,10 @@ namespace gregs.Controllers
    [HttpPut("{jobId}")]
         public ActionResult<Job> edit([FromBody] Job jobUpdate, string jobId)
         {
-             try
+            try
             {
-                Job jobToEdit = FakeDb.Jobs.Find(c => c.Id == jobId);
-        jobUpdate.Title = jobUpdate.Title != null ? jobUpdate.Title : jobToEdit.Title;
-        jobUpdate.Description = jobUpdate.Description != null ? jobUpdate.Description : jobToEdit.Description;
+        jobUpdate.Id = jobId;
+        Job job = _js.Edit(jobUpdate);
         return Ok(jobUpdate);
       }
             catch (System.Exception err)

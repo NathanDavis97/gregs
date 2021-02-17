@@ -1,7 +1,8 @@
 
 using System.Collections.Generic;
-using gregs.db;
+using System;
 using gregs.Models;
+using gregs.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace gregs.Controllers
@@ -13,12 +14,18 @@ namespace gregs.Controllers
 
     public class CarController : ControllerBase
     {
-        [HttpGet]
+    private readonly CarService _cs;
+    public CarController(CarService cs)
+    {
+      _cs = cs;
+    }
+
+    [HttpGet]
         public ActionResult<IEnumerable<Car>> Get()
         {
             try
             {
-        return Ok(FakeDb.Cars);
+        return Ok(_cs.Get());
       }
             catch (System.Exception err)
             {
@@ -26,13 +33,27 @@ namespace gregs.Controllers
                 return BadRequest(err.Message);
             }
         }
+        [HttpGet("{id}")]
+    public ActionResult<Car> Get(string id)
+    {
+      try
+      {
+        Car car = _cs.GetById(id);
+        return Ok(car);
+      }
+      catch (Exception e)
+      {
+        return BadRequest(e.Message);
+      }
+
+    }
         [HttpPost]
         public ActionResult<Car> Create([FromBody] Car newCar)
         {
             try
             {
-        FakeDb.Cars.Add(newCar);
-        return Ok(newCar);
+        Car car = _cs.Create(newCar);
+        return Ok(car);
       }
             catch (System.Exception err)
             {
@@ -45,8 +66,7 @@ namespace gregs.Controllers
     {
       try
       {
-        Car carToRemove = FakeDb.Cars.Find(c => c.Id == carId);
-        if (FakeDb.Cars.Remove(carToRemove))
+        _cs.Delete(carId);
         {
           return Ok("Car Purchased");
         };
@@ -64,10 +84,8 @@ namespace gregs.Controllers
         {
             try
             {
-                Car carToEdit = FakeDb.Cars.Find(c => c.Id == carId);
-        carUpdate.Make = carUpdate.Make != null ? carUpdate.Make : carToEdit.Make;
-        carUpdate.Model = carUpdate.Model != null ? carUpdate.Model : carToEdit.Model;
-        carUpdate.Description = carUpdate.Description != null ? carUpdate.Description : carToEdit.Description;
+        carUpdate.Id = carId;
+        Car car = _cs.Edit(carUpdate);
         return Ok(carUpdate);
       }
             catch (System.Exception err)

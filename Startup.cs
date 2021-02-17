@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using gregs.Services;
+
 
 namespace gregs
 {
@@ -18,6 +20,7 @@ namespace gregs
     {
         public Startup(IConfiguration configuration)
         {
+
             Configuration = configuration;
         }
 
@@ -26,8 +29,10 @@ namespace gregs
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-            services.AddControllers();
+            services.AddTransient<JobService>();
+      services.AddTransient<HouseService>();
+      services.AddTransient<CarService>();
+      services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "gregs", Version = "v1" });
